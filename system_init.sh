@@ -123,7 +123,23 @@ echo "* - nofile 65535">> /etc/security/limits.conf
 
 
 # 08
-Data="08) 精简开机自启服务..."
+Data="08) 修改字符集..."
+echo -n $Data
+if [ $VERSION = 6 ];then
+    /bin/cp /etc/sysconfig/i18n /etc/sysconfig/i18n.bak
+    echo 'LANG="en_US.UTF-8"' > /etc/sysconfig/i18n
+	source /etc/sysconfig/i18n
+	[ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
+else
+    /bin/cp /etc/locale.conf /etc/locale.conf.bak
+    echo 'LANG="en_US.UTF-8"' > /etc/locale.conf
+	source /etc/locale.conf
+	[ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
+fi
+
+
+# 09
+Data="09) 精简开机自启服务..."
 echo -n $Data
 if [ $VERSION = 6 ];then
     for cgt in `chkconfig --list | grep 3:on | awk '{print $1}'`;do chkconfig --level 3 $cgt off &> /dev/null;done
@@ -135,8 +151,8 @@ else
 	[ `systemctl list-unit-files | grep enabled | wc -l` -lt 20 ] && success "$Data" || failure "$Data"
 fi
 
-# 09
-Data="09) 内核参数优化..."
+# 10
+Data="10) 内核参数优化..."
 echo -n $Data
 [ -f /etc/sysctl.conf.bak ] && /bin/cp /etc/sysctl.conf.bak /etc/sysctl.conf.bak.$(date +%F-%H%M%S) || /bin/cp /etc/sysctl.conf /etc/sysctl.conf.bak
 cat >> /etc/sysctl.conf <<EOF
@@ -188,8 +204,8 @@ sysctl -p &> /dev/null
 [ `grep "net.ipv4.ip_forward = 1" /etc/sysctl.conf|wc -l` -ne 0 ] && success "$Data" || failure "$Data"
 
 
-# 10
-Data="10) 禁止空密码连接..."
+# 11
+Data="11) 禁止空密码连接..."
 echo -n $Data
 /bin/cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
 #sed -i 's/\#Port 22/Port 13888/' /etc/ssh/sshd_config
@@ -199,8 +215,8 @@ sed -i 's/\#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
 [ `grep "PermitEmptyPasswords no" /etc/ssh/sshd_config | wc -l` -ne 0 -a `grep "UseDNS no" /etc/ssh/sshd_config|wc -l` -ne 0 ] && success "$Data" || failure "$Data"
 
 
-# 11
-Data="11) 优化history记录..."
+# 12
+Data="12) 优化history记录..."
 echo -n $Data
 cat << EOF >> /etc/profile
 export HISTSIZE=10000
