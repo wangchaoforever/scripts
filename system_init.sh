@@ -15,6 +15,7 @@ fi
 
 # Set PATH Variables
 export PATH=/usr/local/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin:/root/bin
+export LANG="en_US.UTF-8"
 
 # Set output color
 COLUMENS=80
@@ -107,9 +108,9 @@ echo -n $Data
 /usr/sbin/ntpdate ntp1.aliyun.com &> /dev/null &&  hwclock --systohc &> /dev/null
 echo "*/5 * * * * /usr/sbin/ntpdate ntp1.aliyun.com &&  hwclock --systohc" >> /var/spool/cron/root
 if [ $VERSION = 6 ];then
-    service crond restart
+    service crond restart &> /dev/null
 else
-    systemctl restart crond
+    systemctl restart crond &> /dev/null
 fi
 [ `grep ntpdate /var/spool/cron/root |wc -l` -ne 0 ] && success "$Data" || failure "$Data"
 
@@ -128,13 +129,13 @@ echo -n $Data
 if [ $VERSION = 6 ];then
     /bin/cp /etc/sysconfig/i18n /etc/sysconfig/i18n.bak
     echo 'LANG="en_US.UTF-8"' > /etc/sysconfig/i18n
-	source /etc/sysconfig/i18n
-	[ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
+    source /etc/sysconfig/i18n
+    [ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
 else
     /bin/cp /etc/locale.conf /etc/locale.conf.bak
     echo 'LANG="en_US.UTF-8"' > /etc/locale.conf
-	source /etc/locale.conf
-	[ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
+    source /etc/locale.conf
+    [ `echo $LANG | grep 'en_US.UTF-8' | wc -l` -ne 0 ] && success "$Data" || failure "$Data"
 fi
 
 
@@ -143,8 +144,8 @@ Data="09) 精简开机自启服务..."
 echo -n $Data
 if [ $VERSION = 6 ];then
     for cgt in `chkconfig --list | grep 3:on | awk '{print $1}'`;do chkconfig --level 3 $cgt off &> /dev/null;done
-	for cgt in {crond,sshd,network,rsyslog,NetworkManager};do chkconfig --level 3 $cgt on &>/dev/null;done
-	[ `chkconfig --list|grep 3:on|wc -l` -eq 5 ] && success "$Data" || failure "$Data"
+	for cgt in {crond,sshd,network,rsyslog};do chkconfig --level 3 $cgt on &>/dev/null;done
+	[ `chkconfig --list|grep 3:on|wc -l` -eq 4 ] && success "$Data" || failure "$Data"
 else
     systemctl list-unit-files|grep service| grep enable | awk '{print $1}'|xargs -i systemctl disable {} &> /dev/null
 	for cgt in {crond,sshd,network,rsyslog,NetworkManager};do systemctl enable $cgt &>/dev/null;done
